@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f5fa">
+  <title>Azure サポートアシスタント</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-icon">◇</span><span>Azure <strong>Support</strong></span></div>
+      <div class="side-section"><span class="eyebrow">WORKSPACE</span><p class="side-active"><span>✦</span> サポートチャット</p></div>
+      <div class="sidebar-bottom"><span class="status-dot"></span> Azure サポート<br><small>CustomerSupport2 · Foundry</small></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumb">サポート <span>/</span> チャット</div>
+        <button id="reset" class="reset" type="button" aria-label="新しい会話を開始">↻ <span>新しい会話</span></button>
+      </header>
+      <section class="chat" aria-label="チャット">
+        <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text">
+          <div id="welcome" class="welcome">
+            <div class="hero-icon">✦</div>
+            <span class="eyebrow">AZURE CUSTOMER SUPPORT</span>
+            <h1>お困りですか？<br><em>一緒に解決しましょう。</em></h1>
+            <p>Azure の設定やエラー、請求に関する一般的なご質問にお答えします。まずはお気軽にご相談ください。</p>
+            <div class="suggestions">
+              <button type="button" class="suggestion" data-prompt="Azure にログインできません。何を確認すればいいですか？"><span class="suggest-icon">↗</span><span>ログインできない<small>サインインの問題を解決</small></span><span class="arrow">→</span></button>
+              <button type="button" class="suggestion" data-prompt="Azure の請求内容について確認したいです。"><span class="suggest-icon">▤</span><span>請求について相談<small>料金や請求書の確認方法</small></span><span class="arrow">→</span></button>
+              <button type="button" class="suggestion" data-prompt="Azure のサービスでエラーが発生しています。トラブルシューティングを手伝ってください。"><span class="suggest-icon">⚙</span><span>エラーを解決したい<small>問題の切り分けと対処</small></span><span class="arrow">→</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="composer-area">
+          <div id="error" class="error" role="alert" hidden></div>
+          <form id="chat-form" class="composer">
+            <label class="sr-only" for="message">メッセージ</label>
+            <textarea id="message" rows="1" maxlength="4000" placeholder="Azure について質問してください..." required></textarea>
+            <button id="send" type="submit" aria-label="送信">➤</button>
+          </form>
+          <p class="disclaimer">AI の回答には誤りが含まれる場合があります。パスワードやアクセスキーは入力しないでください。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
