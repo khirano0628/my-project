@@ -3,9 +3,12 @@ FROM python:3.13-slim
 
 COPY --from=uv /uv /uvx /bin/
 
+# The local uv.lock references a package mirror and is excluded from Git and
+# the deployment package (.agentignore), so install from requirements.txt, the
+# pinned export of that lock, instead of requiring the lock file itself.
 WORKDIR /app/user_agent
-COPY pyproject.toml uv.lock uv.toml ./
-RUN uv sync --frozen --no-dev --no-install-project
+COPY pyproject.toml requirements.txt uv.toml ./
+RUN uv venv && uv pip install --no-cache -r requirements.txt
 
 COPY . .
 
