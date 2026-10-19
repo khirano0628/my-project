@@ -4,8 +4,8 @@ FROM python:3.13-slim
 COPY --from=uv /uv /uvx /bin/
 
 WORKDIR /app/user_agent
-COPY pyproject.toml uv.lock uv.toml ./
-RUN uv sync --frozen --no-dev --no-install-project
+COPY requirements.txt uv.toml ./
+RUN uv venv && uv pip install --python .venv/bin/python --requirement requirements.txt
 
 COPY . .
 

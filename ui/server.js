@@ -66,17 +66,19 @@ export function createServer({ credential = new DefaultAzureCredential(), invoke
     if (!req.headers["content-type"]?.startsWith("application/json")) {
       return reply(res, 415, { error: "JSON is required." });
     }
-    let body = "";
+    const chunks = [];
+    let bodySize = 0;
     try {
       for await (const chunk of req) {
-        body += chunk;
-        if (body.length > 16384) {
+        bodySize += chunk.length;
+        if (bodySize > 16384) {
           return reply(res, 413, { error: "Message is too long." });
         }
+        chunks.push(chunk);
       }
       let input;
       try {
-        input = JSON.parse(body);
+        input = JSON.parse(Buffer.concat(chunks).toString("utf8"));
       } catch {
         return reply(res, 400, { error: "Invalid JSON." });
       }

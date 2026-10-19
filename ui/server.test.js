@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import http from "node:http";
 import { createServer, extractAnswer } from "./server.js";
 
 test("extracts OpenAI response content and rejects empty responses", () => {
@@ -8,6 +9,75 @@ test("extracts OpenAI response content and rejects empty responses", () => {
     output: [{ content: [{ type: "output_text", text: "こんにちは" }] }]
   }), { answer: "こんにちは", responseId: "caresp_1", sessionId: "session_1" });
   assert.throws(() => extractAnswer({ id: "caresp_2", output: [] }), /missing text/);
+});
+
+test("preserves Japanese text when a request splits a UTF-8 character", async () => {
+  let received;
+  const server = createServer({
+    credential: { getToken: async () => ({ token: "test-token" }) },
+    invoke: async (url, options) => {
+      received = JSON.parse(options.body).input;
+      return new Response(JSON.stringify({
+        id: "caresp_1", agent_session_id: "session_1", output_text: "回答"
+      }));
+    }
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const message = "日本語の問い合わせ";
+  const body = Buffer.from(JSON.stringify({ message }));
+  const split = body.indexOf(Buffer.from("日")) + 1;
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const request = http.request({
+        hostname: "127.0.0.1", port: server.address().port,
+        method: "POST", path: "/api/chat",
+        headers: { "Content-Type": "application/json" }
+      }, response => {
+        response.resume();
+        response.on("end", () => resolve(response.statusCode));
+        response.on("error", reject);
+      });
+      request.on("error", reject);
+      server.prependOnceListener("request", incoming => {
+        incoming.once("data", () => request.end(body.subarray(split)));
+      });
+      request.write(body.subarray(0, split));
+    });
+    assert.equal(result, 200);
+    assert.equal(received, message);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test("limits request bodies by bytes before acquiring credentials", async () => {
+  let tokenRequests = 0;
+  const server = createServer({
+    credential: { getToken: async () => {
+      tokenRequests++;
+      return { token: "test-token" };
+    } },
+    invoke: async () => new Response(JSON.stringify({
+      id: "caresp_1", agent_session_id: "session_1", output_text: "回答"
+    }))
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const url = `http://127.0.0.1:${server.address().port}/api/chat`;
+  try {
+    const send = body => fetch(url, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body
+    });
+    assert.equal((await send("{")).status, 400);
+    const body = JSON.stringify({ message: "質問", padding: "あ".repeat(5500) });
+    assert.ok(body.length < 16384);
+    assert.ok(Buffer.byteLength(body) > 16384);
+    assert.equal((await send(body)).status, 413);
+    assert.equal(tokenRequests, 0);
+    assert.equal((await send(JSON.stringify({ message: "あ".repeat(4000) }))).status, 200);
+    assert.equal(tokenRequests, 1);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
 });
 
 test("serves UI and threads remote responses without leaking credentials", async () => {
