@@ -67,6 +67,12 @@ environment; set `FOUNDRY_PROJECT_RESOURCE_ID`). Recreate the connections and
 toolbox with `azd ai connection create` / `azd ai toolbox create`. The MCP tool
 definitions are large, so the model deployment needs enough TPM (set to 100).
 Never remove `--read-only` or disable the server's incoming auth.
+The MCP enterprise application requires assignment, and the template assigns
+the Foundry project managed identity. Tenant membership or VS Code consent
+alone must not grant access: MCP calls use the server's managed identity, not
+the caller's Azure permissions. Re-provision existing deployments to apply
+this restriction, then verify that an unassigned tenant user is denied while
+the assigned Foundry identity can still invoke the tools.
 
 Source-code deployment uses
 `src/agent-framework-agent-basic-responses/requirements.txt`, exported with
@@ -76,6 +82,8 @@ from Git and the deployment package by `.agentignore`. Refresh the exported
 requirements when the local lock changes. See the
 [hosted-agent source-code deployment guide](https://learn.microsoft.com/azure/foundry/agents/how-to/deploy-hosted-agent-code)
 for the workflow and required permissions.
+The Docker build installs the same pinned `requirements.txt` into its virtual
+environment and does not require the local `uv.lock`.
 
 ## Chat UI (local)
 

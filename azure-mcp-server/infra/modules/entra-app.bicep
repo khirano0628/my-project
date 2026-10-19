@@ -92,6 +92,7 @@ resource entraAppUpdate 'Microsoft.Graph/applications@v1.0' = {
 
 resource entraServicePrincipal 'Microsoft.Graph/servicePrincipals@v1.0' = {
   appId: entraApp.appId
+  appRoleAssignmentRequired: true
 }
 
 output entraAppClientId string = entraApp.appId
