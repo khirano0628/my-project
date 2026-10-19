@@ -1,0 +1,4 @@
+description: Microsoft Learn MCP and read-only Azure MCP
+connections:
+  - name: learn-mcp
+  - name: azure-mcp

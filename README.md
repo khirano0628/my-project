@@ -3,7 +3,9 @@
 An AI assistant for general Microsoft Azure customer-service questions. It
 provides safe troubleshooting guidance and directs account-specific, billing,
 security, and outage cases to a human via Azure portal **Help + support**. It
-does not access subscriptions, open tickets, check live service status, or
+searches Microsoft Learn (Learn MCP) and can run read-only Azure lookups scoped
+to the `khiranoAOAI` resource group (Azure MCP). It does not open tickets,
+access billing or other subscriptions, or
 promise refunds. Do not share credentials or unredacted logs with it.
 
 This project is configured for the existing `CustomerSupport2` Microsoft
@@ -40,11 +42,31 @@ does not establish that the model call works.
 ## Deployment
 
 The hosted agent `azure-customer-service-agent` is deployed to the existing
-`CustomerSupport2` Foundry project. Version 1 is active. A remote billing
+`CustomerSupport2` Foundry project. Version 4 is active (adds MCP tools). A remote billing
 inquiry smoke test confirmed that it responds in Japanese, directs customers
 to Azure billing support, and does not claim to issue refunds or create tickets.
-Open the [agent in Foundry Playground](https://ai.azure.com/nextgen/r/vYkHK4s9QJi1uBFvoqEJkQ,khiranoAOAI,,CustomerSupport2-resource,CustomerSupport2/build/agents/azure-customer-service-agent/build?version=1)
+Open the [agent in Foundry Playground](https://ai.azure.com/nextgen/r/vYkHK4s9QJi1uBFvoqEJkQ,khiranoAOAI,,CustomerSupport2-resource,CustomerSupport2/build/agents/azure-customer-service-agent/build?version=4)
 to test it. Hosting creates billable compute.
+
+### MCP tools
+
+The agent reads one Foundry toolbox, `support-tools` (env `TOOLBOX_NAME` in
+[azure.yaml](azure.yaml), spec in [toolbox.yaml](toolbox.yaml)), via
+`FoundryToolbox`. It bundles two project connections:
+
+- `learn-mcp`: `https://learn.microsoft.com/api/mcp`, no authentication.
+- `azure-mcp`: a self-hosted Azure MCP Server on Azure Container Apps
+  ([azure-mcp-server/](azure-mcp-server)), authenticated with the Foundry
+  project managed identity (audience = the server's Entra app). It runs with
+  `--read-only` and namespaces `group`, `resourcehealth`, `monitor` (the
+  template allows at most three). Its managed identity has **Reader** on the
+  `khiranoAOAI` resource group only.
+
+Deploy the server with `azd provision` in `azure-mcp-server` (separate azd
+environment; set `FOUNDRY_PROJECT_RESOURCE_ID`). Recreate the connections and
+toolbox with `azd ai connection create` / `azd ai toolbox create`. The MCP tool
+definitions are large, so the model deployment needs enough TPM (set to 100).
+Never remove `--read-only` or disable the server's incoming auth.
 
 Source-code deployment uses
 `src/agent-framework-agent-basic-responses/requirements.txt`, exported with
