@@ -99,3 +99,5 @@ a new conversation. Chat history is held only in the browser tab; reloading
 starts a new conversation. If necessary, set `FOUNDRY_AGENT_ENDPOINT` in the
 server process to override the deployed agent's Responses URL. To run the
 local UI tests, use `npm test`.
+
+テスト用の説明文です。
